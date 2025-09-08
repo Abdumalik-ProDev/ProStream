@@ -1,0 +1,64 @@
+# -----------------------------
+# Python
+# -----------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pkl
+*.log
+*.sqlite3
+*.db
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# Jupyter / IPython
+.ipynb_checkpoints/
+*.ipynb
+
+# -----------------------------
+# Poetry
+# -----------------------------
+poetry.lock
+.cache/
+.pytest_cache/
+
+# -----------------------------
+# Alembic
+# -----------------------------
+alembic/versions/*.pyc
+alembic/versions/__pycache__/
+alembic/versions/*_tmp.py
+
+# -----------------------------
+# VSCode / Editors
+# -----------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# -----------------------------
+# Docker
+# -----------------------------
+docker-compose.override.yml
+*.pid
+*.sock
+
+# -----------------------------
+# Logs & Dumps
+# -----------------------------
+*.log
+*.out
+*.err
+dump.rdb
+*.gz
+
+# -----------------------------
+# System
+# -----------------------------
+.DS_Store
+Thumbs.db

@@ -1,0 +1,50 @@
+[tool.poetry]
+name = "user-service"
+version = "1.0.0"
+description = "User microservice for ProStream (profiles, caching, gRPC)"
+authors = ["Abdumalik-ProDev <abdumalikbakhtiyorovwork@gmail.com>"]
+packages = [{ include = "app" }]
+# package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.13"
+
+fastapi = "^0.110.0"
+uvicorn = {extras = ["standard"], version = "^0.29.0"}
+
+# DB
+sqlalchemy = "^2.0.34"
+asyncpg = "^0.30.0"
+alembic = "^1.13.1"
+
+# validation
+pydantic = "^2.6.0"
+pydantic-settings = "^2.2.1"
+
+# jwt
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+
+# redis, kafka
+redis = "^5.0.4"
+aiokafka = "^0.12.0"
+
+# grpc
+grpcio = "^1.67.1"
+grpcio-tools = {version = "^1.74.0", optional = true}
+
+# observability
+prometheus-fastapi-instrumentator = "^6.0.0"
+prometheus-client = "^0.16.0"
+structlog = "^24.1.0"
+
+httpx = "^0.27.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.3"
+pytest-asyncio = "^0.24.0"
+black = "^24.8.0"
+ruff = "^0.6.8"
+
+[build-system]
+requires = ["poetry-core>=1.6.0"]
+build-backend = "poetry.core.masonry.api"

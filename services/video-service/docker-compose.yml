@@ -1,0 +1,65 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: video_user
+      POSTGRES_PASSWORD: video_pass
+      POSTGRES_DB: video_db
+    ports: ["5433:5432"]
+    volumes:
+      - video_db_data:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio:RELEASE.2025-09-01T00-00-00Z
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data
+    ports: ["9001:9000"]
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "http://localhost:9000/minio/health/ready"]
+      interval: 10s
+      retries: 5
+
+  redis:
+    image: redis:7
+    ports: ["6379:6379"]
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on: [zookeeper]
+
+  web:
+    build: .
+    env_file: .env
+    ports:
+      - "8200:8200"
+    depends_on:
+      - db
+      - minio
+      - redis
+      - kafka
+
+  worker:
+    build: .
+    env_file: .env
+    command: celery -A app.workers.celery_app worker --loglevel=info --concurrency=2
+    depends_on:
+      - redis
+      - minio
+      - db
+      - kafka
+
+volumes:
+  video_db_data:

@@ -1,0 +1,45 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: comment_user
+      POSTGRES_PASSWORD: comment_pass
+      POSTGRES_DB: commentdb
+    ports:
+      - "5434:5432"
+    volumes:
+      - comment_db_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on: [zookeeper]
+
+  comment-service:
+    build: .
+    env_file: .env
+    ports:
+      - "8300:8300"
+      - "50054:50054"
+    depends_on:
+      - db
+      - redis
+      - kafka
+
+volumes:
+  comment_db_data:

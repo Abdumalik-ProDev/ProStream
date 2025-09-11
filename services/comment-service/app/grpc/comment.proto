@@ -1,0 +1,40 @@
+syntax = "proto3";
+package comment;
+
+service CommentService {
+  rpc GetCommentsByVideo (GetCommentsRequest) returns (CommentListReply);
+  rpc CreateComment (CreateCommentRequest) returns (CommentReply);
+}
+
+message GetCommentsRequest {
+  string video_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+message CommentItem {
+  string id = 1;
+  string user_id = 2;
+  string video_id = 3;
+  string parent_id = 4;
+  string content = 5;
+  bool is_hidden = 6;
+  int64 created_at = 7;
+}
+
+message CommentListReply {
+  repeated CommentItem items = 1;
+  int32 total = 2;
+}
+
+message CreateCommentRequest {
+  string video_id = 1;
+  string user_id = 2;
+  string parent_id = 3;
+  string content = 4;
+}
+
+message CommentReply {
+  string id = 1;
+  string status = 2;
+}

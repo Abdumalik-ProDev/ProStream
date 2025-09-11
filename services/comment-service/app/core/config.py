@@ -1,22 +1,50 @@
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
+from pydantic import Field
+from functools import lru_cache
+
 
 class Settings(BaseSettings):
-    APP_NAME: str = "comment-service"
-    ENV: str = "development"
-    HOST: str = "0.0.0.0"
-    PORT: int = 8300
+    # General
+    project_name: str = Field("comment-service", env="PROJECT_NAME")
 
-    DATABASE_URL: str
-    REDIS_URL: str
-    KAFKA_BOOTSTRAP_SERVERS: str | None = None
-    KAFKA_TOPIC_COMMENTS: str = "comments"
+    # Database
+    db_user: str = Field(..., env="DB_USER")
+    db_pass: str = Field(..., env="DB_PASS")
+    db_host: str = Field(..., env="DB_HOST")
+    db_port: int = Field(..., env="DB_PORT")
+    db_name: str = Field(..., env="DB_NAME")
 
-    AUTH_SERVICE_JWT_SECRET: str
-    JWT_ALGORITHM: str = "HS256"
+    # Redis
+    redis_url: str = Field(..., env="REDIS_URL")
 
-    GRPC_PORT: int = 50054
+    # Kafka
+    kafka_bootstrap_servers: str = Field(..., env="KAFKA_BOOTSTRAP_SERVERS")
+    kafka_topic: str = Field("comments", env="KAFKA_TOPIC")
+
+    # JWT
+    jwt_secret_key: str = Field(..., env="JWT_SECRET_KEY")
+    jwt_algorithm: str = Field("HS256", env="JWT_ALGORITHM")
+
+    # gRPC
+    grpc_server_port: int = Field(50054, env="GRPC_SERVER_PORT")
 
     class Config:
         env_file = ".env"
+        case_sensitive = True
 
-settings = Settings()
+    @property
+    def database_url(self) -> str:
+        """Build the SQLAlchemy/Postgres URL dynamically"""
+        return (
+            f"postgresql+psycopg2://{self.db_user}:{self.db_pass}"
+            f"@{self.db_host}:{self.db_port}/{self.db_name}"
+        )
+
+
+# Cached singleton instance so every import shares one object
+@lru_cache()
+def get_settings() -> Settings:
+    return Settings()
+
+
+settings = get_settings()

@@ -1,35 +1,49 @@
-import json, logging
+import logging
 from aiokafka import AIOKafkaProducer
-from typing import Optional
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
-_producer: Optional[AIOKafkaProducer] = None
 
-async def get_producer(loop) -> AIOKafkaProducer:
-    global _producer
-    if _producer is None:
-        if not settings.KAFKA_BOOTSTRAP_SERVERS:
-            raise ValueError("KAFKA_BOOTSTRAP_SERVERS is not set")
-        _producer = AIOKafkaProducer(
-            loop=loop,
-            bootstrap_servers=[s.strip() for s in settings.KAFKA_BOOTSTRAP_SERVERS.split(",")],
-            value_serializer=lambda v: json.dumps(v).encode("utf-8"),
-        )
-        await _producer.start()
-    return _producer
+producer: AIOKafkaProducer | None = None
 
-async def publish_event(loop, topic: str, event_type: str, payload: dict):
-    prod = await get_producer(loop)
-    if not prod:
-        logger.error("Kafka producer is not initialized")
-        return
-    message = json.dumps({
-        "event": event_type,
-        "payload": payload
-    }).encode("utf-8")
+
+async def init_kafka():
+    """Initialize Kafka producer."""
+    global producer
+    if producer is None:
+        try:
+            producer = AIOKafkaProducer(
+                bootstrap_servers=settings.kafka_bootstrap_servers
+            )
+            await producer.start()
+            logger.info("✅ Kafka producer connected to %s", settings.kafka_bootstrap_servers)
+        except Exception as e:
+            logger.error("❌ Failed to connect Kafka: %s", e)
+            raise
+
+
+async def close_kafka():
+    """Close Kafka producer."""
+    global producer
+    if producer:
+        await producer.stop()
+        logger.info("🛑 Kafka producer stopped")
+        producer = None
+
+
+async def send_event(topic: str, key: str, value: dict):
+    """Send an event to Kafka."""
+    global producer
+    if producer is None:
+        raise RuntimeError("Kafka producer not initialized")
+
     try:
-        await prod.send_and_wait(topic, message)
-        logger.info(f"Published event to {topic}: {event_type}")
+        await producer.send_and_wait(
+            topic,
+            key=key.encode("utf-8"),
+            value=str(value).encode("utf-8")
+        )
+        logger.info("📤 Sent event to Kafka topic=%s key=%s", topic, key)
     except Exception as e:
-        logger.error(f"Failed to publish event to {topic}: {e}")
+        logger.error("❌ Failed to send Kafka event: %s", e)
+        raise
